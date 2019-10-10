@@ -43,7 +43,7 @@ def nms_temporal(x1,x2,s, overlap):
     #x1 = [b[0] for b in boxes]
     #x2 = [b[1] for b in boxes]
     #s = [b[-1] for b in boxes]
-    union = map(operator.sub, x2, x1) # union = x2-x1
+    union = list(map(operator.sub, x2, x1)) # union = x2-x1
     I = [i[0] for i in sorted(enumerate(s), key=lambda x:x[1])] # sort and get index
 
     while len(I)>0:
@@ -97,10 +97,10 @@ def do_eval_slidingclips(sess, vs_eval_op, model, movie_length_info, iter_step, 
     all_retrievd = 0.0
     for movie_name in model.test_set.movie_names:
         movie_length=movie_length_info[movie_name.split(".")[0]]
-        print "Test movie: "+movie_name+"....loading movie data"
+        print("Test movie: "+movie_name+"....loading movie data")
         movie_clip_featmaps, movie_clip_sentences=model.test_set.load_movie_slidingclip(movie_name, 16)
-        print "sentences: "+ str(len(movie_clip_sentences))
-        print "clips: "+ str(len(movie_clip_featmaps))
+        print("sentences: "+ str(len(movie_clip_sentences)))
+        print("clips: "+ str(len(movie_clip_featmaps)))
         sentence_image_mat=np.zeros([len(movie_clip_sentences), len(movie_clip_featmaps)])
         sentence_image_reg_mat=np.zeros([len(movie_clip_sentences), len(movie_clip_featmaps), 2])
         for k in range(len(movie_clip_sentences)):
@@ -139,13 +139,13 @@ def do_eval_slidingclips(sess, vs_eval_op, model, movie_length_info, iter_step, 
             correct_num_10 = compute_IoU_recall_top_n_forreg(10, IoU, sentence_image_mat, sentence_image_reg_mat, sclips, iclips)
             correct_num_5 = compute_IoU_recall_top_n_forreg(5, IoU, sentence_image_mat, sentence_image_reg_mat, sclips, iclips)
             correct_num_1 = compute_IoU_recall_top_n_forreg(1, IoU, sentence_image_mat, sentence_image_reg_mat, sclips, iclips)
-            print movie_name+" IoU="+str(IoU)+", R@10: "+str(correct_num_10/len(sclips))+"; IoU="+str(IoU)+", R@5: "+str(correct_num_5/len(sclips))+"; IoU="+str(IoU)+", R@1: "+str(correct_num_1/len(sclips))
+            print(movie_name+" IoU="+str(IoU)+", R@10: "+str(correct_num_10/len(sclips))+"; IoU="+str(IoU)+", R@5: "+str(correct_num_5/len(sclips))+"; IoU="+str(IoU)+", R@1: "+str(correct_num_1/len(sclips)))
             all_correct_num_10[k]+=correct_num_10
             all_correct_num_5[k]+=correct_num_5
             all_correct_num_1[k]+=correct_num_1
         all_retrievd+=len(sclips)
     for k in range(len(IoU_thresh)):
-        print " IoU="+str(IoU_thresh[k])+", R@10: "+str(all_correct_num_10[k]/all_retrievd)+"; IoU="+str(IoU_thresh[k])+", R@5: "+str(all_correct_num_5[k]/all_retrievd)+"; IoU="+str(IoU_thresh[k])+", R@1: "+str(all_correct_num_1[k]/all_retrievd)
+        print(" IoU="+str(IoU_thresh[k])+", R@10: "+str(all_correct_num_10[k]/all_retrievd)+"; IoU="+str(IoU_thresh[k])+", R@5: "+str(all_correct_num_5[k]/all_retrievd)+"; IoU="+str(IoU_thresh[k])+", R@1: "+str(all_correct_num_1[k]/all_retrievd))
         test_result_output.write("Step "+str(iter_step)+": IoU="+str(IoU_thresh[k])+", R@10: "+str(all_correct_num_10[k]/all_retrievd)+"; IoU="+str(IoU_thresh[k])+", R@5: "+str(all_correct_num_5[k]/all_retrievd)+"; IoU="+str(IoU_thresh[k])+", R@1: "+str(all_correct_num_1[k]/all_retrievd)+"\n")
 
 def run_training():
@@ -154,8 +154,8 @@ def run_training():
     batch_size = 56
     train_csv_path = "./exp_data/TACoS/train_clip-sentvec.pkl"
     test_csv_path = "./exp_data/TACoS/test_clip-sentvec.pkl"
-    test_feature_dir="../TACOS/Interval128_256_overlap0.8_c3d_fc6/"
-    train_feature_dir = "../TACOS/Interval64_128_256_512_overlap0.8_c3d_fc6/"
+    test_feature_dir="/home/share/TACoS/Interval128_256_overlap0.8_c3d_fc6/"
+    train_feature_dir = "/home/share/TACoS/Interval64_128_256_512_overlap0.8_c3d_fc6/"
     
     model = ctrl_model.CTRL_Model(batch_size, train_csv_path, test_csv_path, test_feature_dir, train_feature_dir)
     test_result_output=open("ctrl_test_results.txt", "w")
@@ -168,7 +168,7 @@ def run_training():
         # Run the Op to initialize the variables.
         init = tf.initialize_all_variables()
         sess.run(init)
-        for step in xrange(max_steps):
+        for step in range(max_steps):
             start_time = time.time()
             feed_dict = model.fill_feed_dict_train_reg()
             _, loss_value, offset_pred_v, loss_reg_v = sess.run([vs_train_op, loss_align_reg, offset_pred, loss_reg], feed_dict=feed_dict)
@@ -176,11 +176,11 @@ def run_training():
 
             if step % 5 == 0:
                 # Print status to stdout.
-                print('Step %d: loss = %.3f (%.3f sec)' % (step, loss_value, duration))
+                print(('Step %d: loss = %.3f (%.3f sec)' % (step, loss_value, duration)))
 
             if (step+1) % 2000 == 0:
-                print "Start to test:-----------------\n"
-                movie_length_info=pickle.load(open("./video_allframes_info.pkl"))
+                print("Start to test:-----------------\n")
+                movie_length_info=pickle.load(open("./video_allframes_info.pkl",'rb'), encoding='iso-8859-1')
                 do_eval_slidingclips(sess, vs_eval_op, model, movie_length_info, step+1, test_result_output)
 
 def main(_):
